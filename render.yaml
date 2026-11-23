@@ -2,6 +2,7 @@ services:
   - type: web
     name: daily-records-tracker
     runtime: python
+    plan: free  # without this, Blueprints default to a paid instance
     buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate"
     startCommand: "gunicorn core.wsgi:application"
     envVars:
