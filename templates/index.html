@@ -10,6 +10,7 @@
     --card: #ffffff;
     --text: #0f172a;
     --muted: #64748b;
+    --text-2: #334155;
     --line: #e2e8f0;
     --primary: #2563eb;
     --primary-hover: #1d4ed8;
@@ -43,6 +44,7 @@
       --card: #151b26;
       --text: #f1f5f9;
       --muted: #94a3b8;
+      --text-2: #cbd5e1;
       --line: #242d3d;
       --primary: #3b82f6;
       --primary-hover: #60a5fa;
@@ -73,12 +75,12 @@
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
   }
   main {
-    max-width: 960px;
+    max-width: 1040px;
     margin: 0 auto;
     padding: 24px 16px 80px;
   }
@@ -419,16 +421,19 @@
   }
   .group-header {
     display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
     background: var(--bg);
     border: 1px solid var(--line);
+    border-left: 3px solid var(--primary);
     border-radius: 8px;
     margin-bottom: 8px;
   }
   .group-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -454,7 +459,7 @@
     display: flex;
     gap: 12px;
     align-items: flex-start;
-    padding: 12px 14px;
+    padding: 14px 16px;
     background: var(--card);
     border: 1px solid var(--line);
     border-radius: 8px;
@@ -477,13 +482,13 @@
   }
   .entry-title {
     font-weight: 600;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--text);
   }
   .entry-notes {
-    color: var(--muted);
-    font-size: 13px;
-    margin: 2px 0 0;
+    color: var(--text-2);
+    font-size: 14px;
+    margin: 4px 0 0;
     white-space: pre-wrap;
     line-height: 1.5;
   }
@@ -494,8 +499,12 @@
   }
   .entry-hours {
     font-size: 12px;
-    color: var(--muted);
-    font-weight: 500;
+    color: var(--text-2);
+    font-weight: 600;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 1px 8px;
+    border-radius: 99px;
   }
 
   /* Category Tags */
@@ -540,6 +549,35 @@
   .action-btn.del:hover {
     color: #ef4444;
   }
+
+  /* Month Report */
+  .mr-nav { display: flex; align-items: center; gap: 8px; }
+  .mr-nav button { padding: 6px 12px; }
+  .mr-month { font-size: 17px; font-weight: 700; min-width: 150px; text-align: center; }
+  .mr-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+  .mr-tile { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .mr-tile b { display: block; font-size: 22px; line-height: 1.2; }
+  .mr-tile span { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .mr-layout { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 18px; }
+  .mr-sub { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 0 0 8px; }
+  .mr-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .mr-dow { font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; padding-bottom: 2px; }
+  .mr-day { aspect-ratio: 1 / .85; border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; text-align: left; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; color: var(--text);
+    background: color-mix(in srgb, var(--primary) calc(var(--i, 0) * 38%), var(--card)); }
+  .mr-day .n { font-size: 12px; font-weight: 600; }
+  .mr-day .h { font-size: 13px; font-weight: 700; }
+  .mr-day.weekend { background: var(--bg); color: var(--muted); }
+  .mr-day.off { border-style: dashed; color: var(--muted); }
+  .mr-day.off .h { font-weight: 500; font-size: 12px; }
+  .mr-day.empty { visibility: hidden; }
+  .mr-day.sel { outline: 2px solid var(--primary); outline-offset: 1px; }
+  .mr-day:hover { border-color: var(--primary); }
+  .mr-legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
+  .mr-bar-row { display: grid; grid-template-columns: 130px 1fr 56px; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+  .mr-bar { height: 8px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+  .mr-bar i { display: block; height: 100%; background: var(--primary); border-radius: 99px; }
+  .mr-bar-row .v { text-align: right; font-weight: 600; color: var(--text-2); }
+  .mr-daydetail { margin-top: 18px; }
 
   /* Highlights Card in Month & Week view */
   .highlights-box {
@@ -627,6 +665,10 @@
 
   @media (max-width: 820px) {
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .mr-tiles { grid-template-columns: repeat(2, 1fr); }
+    .mr-layout { grid-template-columns: minmax(0, 1fr); }
+    .mr-bar-row { grid-template-columns: 110px 1fr 48px; }
+    .mr-day { padding: 3px 4px; }
     .op-grid { grid-template-columns: 1fr; }
     form { grid-template-columns: 1fr; }
     .col-1, .col-2, .col-3, .col-4 { grid-column: 1 / -1; }
@@ -825,6 +867,36 @@
     </form>
   </section>
 
+  <!-- Month Report -->
+  <section class="card" id="monthReport">
+    <div class="card-header" style="flex-wrap:wrap;gap:10px">
+      <h2 class="card-title">📈 Month Report</h2>
+      <div class="mr-nav">
+        <button class="subtle" id="mrPrev" aria-label="Previous month">◀</button>
+        <span class="mr-month" id="mrLabel" aria-live="polite"></span>
+        <button class="subtle" id="mrNext" aria-label="Next month">▶</button>
+      </div>
+    </div>
+    <div class="mr-tiles">
+      <div class="mr-tile"><b id="mrDays">0</b><span>Days worked</span></div>
+      <div class="mr-tile"><b id="mrHours">0h</b><span>Total hours</span></div>
+      <div class="mr-tile"><b id="mrAvg">0h</b><span>Avg per day</span></div>
+      <div class="mr-tile"><b id="mrSessions">0</b><span>Class sessions</span></div>
+    </div>
+    <div class="mr-layout">
+      <div>
+        <p class="mr-sub">Day by day</p>
+        <div class="mr-cal" id="mrCal"></div>
+        <div class="mr-legend"><span>Darker = more hours</span><span>Off = weekday with nothing logged</span><span>Click a day for details</span></div>
+      </div>
+      <div>
+        <p class="mr-sub">Hours by category</p>
+        <div id="mrCats"></div>
+      </div>
+    </div>
+    <div class="mr-daydetail" id="mrDetail"></div>
+  </section>
+
   <!-- Timeline / Records Viewer -->
   <section class="card">
     <!-- View Switcher Tabs -->
@@ -984,6 +1056,9 @@ function showToast(msg) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2600);
 }
+
+const CAT_LABELS = { Achievement: '⭐ Achievement', Task: '📌 Task', Batch: '🎓 Class', ProjectEval: '📊 Project Eval', MockInterview: '🎙️ Mock Interview', AdmissionSupport: '💼 Sales / Admissions', Syllabus: '📚 Syllabus', Placement: '🎯 Placement', Learning: '💡 Learning', Meeting: '🤝 Meeting', Issue: '⚠️ Issue', Other: '📝 Other' };
+const catLabel = c => CAT_LABELS[c] || c;
 
 // Helpers
 function parseDate(dStr) {
@@ -1203,6 +1278,7 @@ async function fetchRecords() {
     records = data.records || [];
     renderList();
     fetchStats();
+    loadMonthReport();
   } catch (err) {
     console.error('Error fetching records:', err);
   }
@@ -1282,7 +1358,7 @@ function createEntryElement(r, showDateInEntry = false) {
   el.innerHTML = `
     <div class="entry-main">
       <div class="entry-head">
-        <span class="tag tag-${escapeHtml(r.cat)}">${escapeHtml(r.cat)}</span>
+        <span class="tag tag-${escapeHtml(r.cat)}">${escapeHtml(catLabel(r.cat))}</span>
         <span class="entry-title">${escapeHtml(r.title)}</span>
         ${hoursText ? `<span class="entry-hours">${hoursText}</span>` : ''}
       </div>
@@ -1489,6 +1565,98 @@ function renderMonthlyView(items, container) {
 
     container.appendChild(block);
   }
+}
+
+// 📈 Month Report (independent of list filters)
+let mrAll = [];
+let mrMonth = todayStr().slice(0, 7); // 'YYYY-MM'
+let mrSel = null;
+
+async function loadMonthReport() {
+  try {
+    const res = await fetch('/api/records/?time_filter=all');
+    if (!res.ok) return;
+    mrAll = (await res.json()).records || [];
+    renderMonthReport();
+  } catch (err) { console.warn('Month report load failed', err); }
+}
+
+function mrShift(delta) {
+  const [y, m] = mrMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  mrMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  mrSel = null;
+  renderMonthReport();
+}
+$('mrPrev').onclick = () => mrShift(-1);
+$('mrNext').onclick = () => mrShift(1);
+
+const hrs = list => list.reduce((s, r) => s + (parseFloat(r.hours) || 0), 0);
+const fmtH = h => `${Math.round(h * 100) / 100}h`;
+
+function renderMonthReport() {
+  const [y, m] = mrMonth.split('-').map(Number);
+  const monthName = new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  $('mrLabel').textContent = monthName;
+  const items = mrAll.filter(r => r.date.startsWith(mrMonth));
+  const byDay = {};
+  for (const r of items) (byDay[r.date] ||= []).push(r);
+  const days = Object.keys(byDay).sort();
+  const total = hrs(items);
+
+  $('mrDays').textContent = days.length;
+  $('mrHours').textContent = fmtH(total);
+  $('mrAvg').textContent = fmtH(days.length ? total / days.length : 0);
+  $('mrSessions').textContent = items.filter(r => r.cat === 'Batch').length;
+
+  if (!mrSel || !mrSel.startsWith(mrMonth)) mrSel = days[days.length - 1] || null;
+
+  // Calendar (Mon-first)
+  const cal = $('mrCal');
+  const maxH = Math.max(1, ...days.map(d => hrs(byDay[d])));
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7;
+  const today = todayStr();
+  let html = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<div class="mr-dow">${d}</div>`).join('');
+  html += '<div class="mr-day empty"></div>'.repeat(lead);
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${mrMonth}-${String(d).padStart(2, '0')}`;
+    const list = byDay[ds] || [];
+    const h = hrs(list);
+    const wd = new Date(y, m - 1, d).getDay();
+    const weekend = wd === 0 || wd === 6;
+    const off = !weekend && !list.length && ds <= today;
+    const cls = ['mr-day', weekend && !list.length ? 'weekend' : '', off ? 'off' : '', ds === mrSel ? 'sel' : ''].join(' ');
+    const label = `${d} ${monthName}: ${list.length ? `${list.length} entries, ${fmtH(h)}` : 'nothing logged'}`;
+    html += `<button class="${cls}" style="--i:${list.length ? (0.25 + 0.75 * h / maxH).toFixed(2) : 0}" data-d="${ds}" aria-label="${label}" aria-pressed="${ds === mrSel}">
+      <span class="n">${d}</span><span class="h">${h ? fmtH(h) : (list.length ? '•' : (off ? 'off' : ''))}</span></button>`;
+  }
+  cal.innerHTML = html;
+  cal.querySelectorAll('button[data-d]').forEach(b => b.onclick = () => { mrSel = b.dataset.d; renderMonthReport(); });
+
+  // Category bars
+  const cats = {};
+  for (const r of items) { const c = (cats[r.cat] ||= { h: 0, n: 0 }); c.h += parseFloat(r.hours) || 0; c.n++; }
+  const catKeys = Object.keys(cats).sort((a, b) => cats[b].h - cats[a].h || cats[b].n - cats[a].n);
+  const maxC = Math.max(1, ...catKeys.map(k => cats[k].h));
+  $('mrCats').innerHTML = catKeys.length ? catKeys.map(k => `
+    <div class="mr-bar-row" title="${cats[k].n} entries">
+      <span>${escapeHtml(catLabel(k))}</span>
+      <div class="mr-bar"><i style="width:${(cats[k].h / maxC * 100).toFixed(1)}%"></i></div>
+      <span class="v">${cats[k].h ? fmtH(cats[k].h) : cats[k].n + '×'}</span>
+    </div>`).join('') : '<p style="color:var(--muted);margin:0">Nothing logged this month.</p>';
+
+  // Selected day detail (default: latest logged day)
+  const detail = $('mrDetail');
+  detail.innerHTML = '';
+  if (!mrSel) return;
+  const list = byDay[mrSel] || [];
+  const head = document.createElement('div');
+  head.className = 'group-header';
+  head.innerHTML = `<div class="group-title">📅 ${parseDate(mrSel).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+    <div class="group-meta">${list.length ? `<span class="group-badge">⏱️ ${fmtH(hrs(list))}</span><span class="group-badge">${list.length} ${list.length === 1 ? 'entry' : 'entries'}</span>` : '<span class="group-badge">Nothing logged</span>'}</div>`;
+  detail.appendChild(head);
+  for (const r of list) detail.appendChild(createEntryElement(r, false));
 }
 
 // Edit Record Modal
