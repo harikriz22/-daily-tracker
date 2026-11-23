@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 import datetime
@@ -18,6 +20,8 @@ class Record(models.Model):
         ('Other', '📝 Other'),
     ]
 
+    # shortcut: nullable at DB level to avoid a table rebuild on Turso; app code always sets it
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, related_name='records')
     date = models.DateField(default=datetime.date.today, db_index=True)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='Task', db_index=True)
     title = models.CharField(max_length=255)
@@ -46,6 +50,7 @@ class Record(models.Model):
         }
 
 class OperationalMetric(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, related_name='metrics')  # one per user via get_for()
     # Batches & Students
     total_batches = models.IntegerField(default=0, verbose_name="Total Batches")
     batches_completed = models.IntegerField(default=0, verbose_name="Batches Completed")
@@ -69,8 +74,8 @@ class OperationalMetric(models.Model):
         verbose_name_plural = 'Operational Metrics'
 
     @classmethod
-    def get_solo(cls):
-        obj, _ = cls.objects.get_or_create(id=1)
+    def get_for(cls, user):
+        obj, _ = cls.objects.get_or_create(user=user)
         return obj
 
     def to_dict(self):
@@ -88,9 +93,8 @@ class OperationalMetric(models.Model):
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }
 
-class AppSetting(models.Model):
-    key = models.CharField(max_length=100, unique=True)
-    value = models.TextField(blank=True, default='')
 
-    def __str__(self):
-        return f"{self.key}: {self.value}"
+def local_owner():
+    """User that desktop tools (popup, management commands) record for."""
+    from django.contrib.auth import get_user_model
+    return get_user_model().objects.get(username=os.environ.get('TRACKER_USER', 'harikriz'))

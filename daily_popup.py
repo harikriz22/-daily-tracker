@@ -12,7 +12,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 try:
     import django
     django.setup()
-    from tracker.models import Record, OperationalMetric
+    from tracker.models import Record, OperationalMetric, local_owner
 except Exception as e:
     messagebox.showerror("Initialization Error", f"Failed to initialize Django environment:\n{e}")
     sys.exit(1)
@@ -210,7 +210,8 @@ class DailyTrackerPopup(tk.Tk):
             return
 
         added_records = []
-        metric = OperationalMetric.get_solo()
+        owner = local_owner()
+        metric = OperationalMetric.get_for(owner)
         metric_updated = False
 
         # 1. Batch / Session
@@ -219,6 +220,7 @@ class DailyTrackerPopup(tk.Tk):
         batch_hours = self.parse_hours(self.batch_hours_var.get())
         if batch_title:
             rec = Record.objects.create(
+                user=owner,
                 date=record_date,
                 category='Batch',
                 title=batch_title,
@@ -233,6 +235,7 @@ class DailyTrackerPopup(tk.Tk):
         task_hours = self.parse_hours(self.task_hours_var.get())
         if task_title:
             rec = Record.objects.create(
+                user=owner,
                 date=record_date,
                 category='Task',
                 title=task_title,
@@ -249,6 +252,7 @@ class DailyTrackerPopup(tk.Tk):
         if proj_evals > 0 or (eval_notes and "eval" in eval_notes.lower()):
             title = f"Conducted {proj_evals} Project Evaluation(s)" if proj_evals > 0 else "Project Evaluation Activity"
             rec = Record.objects.create(
+                user=owner,
                 date=record_date,
                 category='ProjectEval',
                 title=title,
@@ -263,6 +267,7 @@ class DailyTrackerPopup(tk.Tk):
         if mock_ints > 0 or (eval_notes and "mock" in eval_notes.lower()):
             title = f"Conducted {mock_ints} Mock Interview(s)" if mock_ints > 0 else "Mock Interview Session"
             rec = Record.objects.create(
+                user=owner,
                 date=record_date,
                 category='MockInterview',
                 title=title,

@@ -19,3 +19,7 @@ staticfiles/
 
 # Logs
 *.log
+
+# Local data backups
+*-backup-*.json
+.playwright-mcp/

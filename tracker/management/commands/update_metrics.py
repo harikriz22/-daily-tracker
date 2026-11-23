@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from tracker.models import OperationalMetric
+from tracker.models import OperationalMetric, local_owner
 
 class Command(BaseCommand):
     help = "View or update Operational Metrics in the tracker."
@@ -18,7 +18,7 @@ class Command(BaseCommand):
         parser.add_argument("--show", action="store_true", help="Print current operational metrics")
 
     def handle(self, *args, **options):
-        metric = OperationalMetric.get_solo()
+        metric = OperationalMetric.get_for(local_owner())
         updated = False
 
         field_mapping = {

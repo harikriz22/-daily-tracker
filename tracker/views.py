@@ -1,16 +1,27 @@
 import csv
 import json
 import datetime
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login
+from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
-from .models import Record, OperationalMetric, AppSetting
+from .models import Record, OperationalMetric
 
 def index_view(request):
     return render(request, 'index.html')
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect('index')
+    form = UserCreationForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        login(request, form.save())
+        return redirect('index')
+    return render(request, 'registration/register.html', {'form': form})
 
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
@@ -20,7 +31,7 @@ def api_records(request):
         cat = request.GET.get('cat', '').strip()
         time_filter = request.GET.get('time_filter', 'all').strip()
 
-        qs = Record.objects.all()
+        qs = Record.objects.filter(user=request.user)
 
         if cat:
             qs = qs.filter(category=cat)
@@ -71,6 +82,7 @@ def api_records(request):
                 parsed_hours = None
 
         record = Record.objects.create(
+            user=request.user,
             date=parsed_date,
             category=cat,
             title=title,
@@ -79,7 +91,7 @@ def api_records(request):
         )
 
         # Automatically increment corresponding OperationalMetric if relevant
-        metric = OperationalMetric.get_solo()
+        metric = OperationalMetric.get_for(request.user)
         if cat == 'MockInterview':
             metric.mock_interviews += 1
             metric.save()
@@ -101,7 +113,7 @@ def api_records(request):
 @csrf_exempt
 @require_http_methods(["GET", "PUT", "PATCH", "DELETE"])
 def api_record_detail(request, record_id):
-    record = get_object_or_404(Record, id=record_id)
+    record = get_object_or_404(Record, id=record_id, user=request.user)
 
     if request.method == "GET":
         return JsonResponse({'record': record.to_dict()})
@@ -137,7 +149,7 @@ def api_record_detail(request, record_id):
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def api_operational_metrics(request):
-    metric = OperationalMetric.get_solo()
+    metric = OperationalMetric.get_for(request.user)
 
     if request.method == "GET":
         return JsonResponse({'metrics': metric.to_dict()})
@@ -183,53 +195,15 @@ def api_operational_metrics(request):
 
 @require_http_methods(["GET"])
 def api_stats(request):
-    pe_setting = AppSetting.objects.filter(key='pe_target_date').first()
-    pe_target_str = pe_setting.value if pe_setting else '2027-05-01'
-
-    today = datetime.date.today()
-    days_to_pe = None
-    try:
-        pe_date = datetime.date.fromisoformat(pe_target_str)
-        days_to_pe = max(0, (pe_date - today).days)
-    except Exception:
-        days_to_pe = 0
-
-    total_records = Record.objects.count()
-    achievements_count = Record.objects.filter(category='Achievement').count()
-    distinct_days_logged = Record.objects.values('date').distinct().count()
-    total_hours_agg = Record.objects.aggregate(total=Sum('hours'))['total'] or 0.0
-
-    metric = OperationalMetric.get_solo()
-
+    mine = Record.objects.filter(user=request.user)
+    total_hours_agg = mine.aggregate(total=Sum('hours'))['total'] or 0.0
     return JsonResponse({
-        'pe_target_date': pe_target_str,
-        'days_to_pe': days_to_pe,
-        'achievements_count': achievements_count,
-        'distinct_days_logged': distinct_days_logged,
+        'achievements_count': mine.filter(category='Achievement').count(),
+        'distinct_days_logged': mine.values('date').distinct().count(),
         'total_hours': float(round(total_hours_agg, 2)),
-        'total_records': total_records,
-        'operational_metrics': metric.to_dict(),
+        'total_records': mine.count(),
+        'operational_metrics': OperationalMetric.get_for(request.user).to_dict(),
     })
-
-@csrf_exempt
-@require_http_methods(["GET", "POST"])
-def api_pe_date(request):
-    if request.method == "GET":
-        setting = AppSetting.objects.filter(key='pe_target_date').first()
-        return JsonResponse({'pe_target_date': setting.value if setting else '2027-05-01'})
-    elif request.method == "POST":
-        try:
-            body = json.loads(request.body.decode('utf-8'))
-            pe_date = body.get('pe_target_date')
-            if pe_date:
-                AppSetting.objects.update_or_create(
-                    key='pe_target_date',
-                    defaults={'value': pe_date}
-                )
-                return JsonResponse({'pe_target_date': pe_date, 'message': 'Updated'})
-        except Exception:
-            pass
-        return JsonResponse({'error': 'Invalid request'}, status=400)
 
 @require_http_methods(["GET"])
 def api_export_csv(request):
@@ -239,15 +213,15 @@ def api_export_csv(request):
     writer = csv.writer(response)
     writer.writerow(['Date', 'Category', 'Title', 'Details', 'Hours'])
 
-    for r in Record.objects.all().order_by('date', 'id'):
+    for r in Record.objects.filter(user=request.user).order_by('date', 'id'):
         writer.writerow([r.date.strftime('%Y-%m-%d'), r.category, r.title, r.notes, r.hours if r.hours is not None else ''])
 
     return response
 
 @require_http_methods(["GET"])
 def api_export_json(request):
-    records = [r.to_dict() for r in Record.objects.all().order_by('date', 'id')]
-    metrics = OperationalMetric.get_solo().to_dict()
+    records = [r.to_dict() for r in Record.objects.filter(user=request.user).order_by('date', 'id')]
+    metrics = OperationalMetric.get_for(request.user).to_dict()
     export_payload = {
         'records': records,
         'operational_metrics': metrics,
@@ -288,6 +262,7 @@ def api_import_json(request):
                     p_hours = None
 
             Record.objects.create(
+                user=request.user,
                 date=p_date,
                 category=cat,
                 title=title,
@@ -298,7 +273,7 @@ def api_import_json(request):
 
         if isinstance(body, dict) and 'operational_metrics' in body:
             m_data = body['operational_metrics']
-            metric = OperationalMetric.get_solo()
+            metric = OperationalMetric.get_for(request.user)
             for f in ['total_batches', 'batches_completed', 'total_students', 'students_completed',
                       'project_evaluations', 'mock_interviews', 'support_enquiries', 'syllabus_updates',
                       'placements_supported']:

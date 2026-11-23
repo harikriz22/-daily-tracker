@@ -1,0 +1,19 @@
+{% extends "registration/base_auth.html" %}
+{% block title %}Create account{% endblock %}
+{% block form %}
+    <h1>📋 Daily Tracker</h1>
+    <p class="sub">Create your account to start tracking your work</p>
+    {% for e in form.non_field_errors %}<p class="err" role="alert">{{ e }}</p>{% endfor %}
+    <label for="id_username">Username</label>
+    <input id="id_username" name="username" autocomplete="username" required autofocus maxlength="150" value="{{ form.username.value|default:'' }}" aria-describedby="username_err">
+    {% for e in form.username.errors %}<p class="err" id="username_err" role="alert">{{ e }}</p>{% endfor %}
+    <label for="id_password1">Password</label>
+    <input id="id_password1" name="password1" type="password" autocomplete="new-password" required aria-describedby="password1_help">
+    {% for e in form.password1.errors %}<p class="err" role="alert">{{ e }}</p>{% endfor %}
+    <div class="help" id="password1_help">{{ form.password1.help_text|safe }}</div>
+    <label for="id_password2">Confirm password</label>
+    <input id="id_password2" name="password2" type="password" autocomplete="new-password" required>
+    {% for e in form.password2.errors %}<p class="err" role="alert">{{ e }}</p>{% endfor %}
+    <button type="submit">Create account</button>
+    <p class="alt">Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+{% endblock %}

@@ -1,6 +1,6 @@
 import datetime
 from django.core.management.base import BaseCommand, CommandError
-from tracker.models import Record, OperationalMetric
+from tracker.models import Record, OperationalMetric, local_owner
 
 class Command(BaseCommand):
     help = "Add a new task, progress, or evaluation record to the Daily Progress & Performance Tracker."
@@ -56,7 +56,9 @@ class Command(BaseCommand):
         notes = options.get("notes") or ""
         hours = options.get("hours")
 
+        owner = local_owner()
         record = Record.objects.create(
+            user=owner,
             date=record_date,
             category=category,
             title=title.strip(),
@@ -66,7 +68,7 @@ class Command(BaseCommand):
 
         metric_updated = False
         if not options.get("no_metric_sync"):
-            metric = OperationalMetric.get_solo()
+            metric = OperationalMetric.get_for(owner)
             if category == "MockInterview":
                 metric.mock_interviews += 1
                 metric.save()

@@ -1,39 +1,13 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in · Daily Tracker</title>
-<style>
-  :root { --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#64748b; --line:#e2e8f0; --primary:#2563eb; --primary-hover:#1d4ed8; --err:#b91c1c; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#0b0f17; --card:#151b26; --text:#f1f5f9; --muted:#94a3b8; --line:#242d3d; --primary:#3b82f6; --primary-hover:#60a5fa; --err:#fca5a5; }
-  }
-  * { box-sizing:border-box; }
-  body { margin:0; min-height:100vh; display:grid; place-items:center; padding:16px; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
-  form { width:100%; max-width:360px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:28px; box-shadow:0 4px 6px -1px rgba(0,0,0,.07); }
-  h1 { font-size:20px; margin:0 0 4px; }
-  p.sub { margin:0 0 20px; color:var(--muted); font-size:13px; }
-  label { display:block; font-size:13px; font-weight:600; margin:14px 0 6px; }
-  input { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--text); font-size:15px; }
-  input:focus { outline:2px solid var(--primary); outline-offset:1px; }
-  button { width:100%; margin-top:20px; padding:11px; border:0; border-radius:8px; background:var(--primary); color:#fff; font-size:15px; font-weight:600; cursor:pointer; }
-  button:hover { background:var(--primary-hover); }
-  .err { color:var(--err); font-size:13px; margin:0 0 8px; }
-</style>
-</head>
-<body>
-  <form method="post">
-    {% csrf_token %}
+{% extends "registration/base_auth.html" %}
+{% block form %}
     <h1>📋 Daily Tracker</h1>
     <p class="sub">Sign in to continue</p>
-    {% if form.errors %}<p class="err" role="alert">Wrong username or password.</p>{% endif %}
+    {% if form.errors %}<p class="err" role="alert" style="margin-bottom:8px">Wrong username or password.</p>{% endif %}
     <label for="id_username">Username</label>
     <input id="id_username" name="username" autocomplete="username" required autofocus value="{{ form.username.value|default:'' }}">
     <label for="id_password">Password</label>
     <input id="id_password" name="password" type="password" autocomplete="current-password" required>
     <input type="hidden" name="next" value="{{ next }}">
     <button type="submit">Sign in</button>
-  </form>
-</body>
-</html>
+    <p class="alt">New here? <a href="{% url 'register' %}">Create an account</a></p>
+{% endblock %}
