@@ -647,6 +647,7 @@
     <div class="pe-box">
       <span>Next PE Target:</span>
       <input type="date" id="peDate" title="Set next Performance Evaluation date">
+      <form method="post" action="{% url 'logout' %}" style="display:inline;margin-left:8px">{% csrf_token %}<button type="submit" title="Sign out" style="background:none;border:1px solid var(--line);color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer">Logout</button></form>
     </div>
   </header>
 
