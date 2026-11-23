@@ -68,27 +68,7 @@ class Command(BaseCommand):
 
         metric_updated = False
         if not options.get("no_metric_sync"):
-            metric = OperationalMetric.get_for(owner)
-            if category == "MockInterview":
-                metric.mock_interviews += 1
-                metric.save()
-                metric_updated = True
-            elif category == "ProjectEval":
-                metric.project_evaluations += 1
-                metric.save()
-                metric_updated = True
-            elif category == "AdmissionSupport":
-                metric.support_enquiries += 1
-                metric.save()
-                metric_updated = True
-            elif category == "Syllabus":
-                metric.syllabus_updates += 1
-                metric.save()
-                metric_updated = True
-            elif category == "Placement":
-                metric.placements_supported += 1
-                metric.save()
-                metric_updated = True
+            metric_updated = OperationalMetric.bump(owner, category, +1)
 
         self.stdout.write(
             self.style.SUCCESS(

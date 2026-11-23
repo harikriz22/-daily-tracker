@@ -75,7 +75,9 @@ WSGI_APPLICATION = 'core.wsgi.application'
 TURSO_DATABASE_URL = os.environ.get('TURSO_DATABASE_URL')
 TURSO_AUTH_TOKEN = os.environ.get('TURSO_AUTH_TOKEN')
 
-if TURSO_DATABASE_URL and TURSO_AUTH_TOKEN:
+import sys
+# Never run tests on Turso: libsql test setup/teardown drops the real tables.
+if TURSO_DATABASE_URL and TURSO_AUTH_TOKEN and 'test' not in sys.argv:
     DATABASES = {
         'default': {
             'ENGINE': 'django_libsql',

@@ -5,7 +5,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q, Sum, Count
 from django.utils import timezone
@@ -23,7 +22,6 @@ def register_view(request):
         return redirect('index')
     return render(request, 'registration/register.html', {'form': form})
 
-@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def api_records(request):
     if request.method == "GET":
@@ -90,27 +88,10 @@ def api_records(request):
             hours=parsed_hours
         )
 
-        # Automatically increment corresponding OperationalMetric if relevant
-        metric = OperationalMetric.get_for(request.user)
-        if cat == 'MockInterview':
-            metric.mock_interviews += 1
-            metric.save()
-        elif cat == 'ProjectEval':
-            metric.project_evaluations += 1
-            metric.save()
-        elif cat == 'AdmissionSupport':
-            metric.support_enquiries += 1
-            metric.save()
-        elif cat == 'Syllabus':
-            metric.syllabus_updates += 1
-            metric.save()
-        elif cat == 'Placement':
-            metric.placements_supported += 1
-            metric.save()
+        OperationalMetric.bump(request.user, cat, +1)
 
         return JsonResponse({'record': record.to_dict(), 'message': 'Record created successfully'}, status=201)
 
-@csrf_exempt
 @require_http_methods(["GET", "PUT", "PATCH", "DELETE"])
 def api_record_detail(request, record_id):
     record = get_object_or_404(Record, id=record_id, user=request.user)
@@ -129,8 +110,11 @@ def api_record_detail(request, record_id):
                 record.date = datetime.date.fromisoformat(body['date'])
             except ValueError:
                 pass
-        if 'cat' in body or 'category' in body:
-            record.category = body.get('cat') or body.get('category')
+        new_cat = body.get('cat') or body.get('category')
+        if new_cat and new_cat != record.category:
+            OperationalMetric.bump(request.user, record.category, -1)
+            OperationalMetric.bump(request.user, new_cat, +1)
+            record.category = new_cat
         if 'title' in body:
             record.title = body['title'].strip()
         if 'notes' in body:
@@ -143,10 +127,10 @@ def api_record_detail(request, record_id):
         return JsonResponse({'record': record.to_dict(), 'message': 'Record updated successfully'})
 
     elif request.method == "DELETE":
+        OperationalMetric.bump(request.user, record.category, -1)
         record.delete()
         return JsonResponse({'message': 'Record deleted successfully'})
 
-@csrf_exempt
 @require_http_methods(["GET", "POST"])
 def api_operational_metrics(request):
     metric = OperationalMetric.get_for(request.user)
@@ -231,12 +215,13 @@ def api_export_json(request):
     response['Content-Disposition'] = f'attachment; filename="progress-backup-{datetime.date.today()}.json"'
     return response
 
-@csrf_exempt
 @require_http_methods(["POST"])
 def api_import_json(request):
     try:
         body = json.loads(request.body.decode('utf-8'))
         raw_records = body if isinstance(body, list) else body.get('records', [])
+        # A full backup restores counters itself below; a plain record list must bump them per record.
+        has_metrics = isinstance(body, dict) and 'operational_metrics' in body
 
         imported_count = 0
         for item in raw_records:
@@ -269,9 +254,11 @@ def api_import_json(request):
                 notes=notes,
                 hours=p_hours
             )
+            if not has_metrics:
+                OperationalMetric.bump(request.user, cat, +1)
             imported_count += 1
 
-        if isinstance(body, dict) and 'operational_metrics' in body:
+        if has_metrics:
             m_data = body['operational_metrics']
             metric = OperationalMetric.get_for(request.user)
             for f in ['total_batches', 'batches_completed', 'total_students', 'students_completed',

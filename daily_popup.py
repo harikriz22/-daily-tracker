@@ -319,5 +319,8 @@ class DailyTrackerPopup(tk.Tk):
 
 
 if __name__ == '__main__':
+    # Scheduled reminder passes --reminder: stay quiet if something is already logged today.
+    if '--reminder' in sys.argv and Record.objects.filter(user=local_owner(), date=datetime.date.today()).exists():
+        sys.exit(0)
     app = DailyTrackerPopup()
     app.mainloop()

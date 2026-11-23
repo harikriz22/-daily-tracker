@@ -44,3 +44,33 @@ class MultiUserTests(TestCase):
         self.assertEqual(self.client.get('/').status_code, 302)
         self.assertEqual(self.client.get('/api/records/').status_code, 302)
         self.assertEqual(self.client.get('/register/').status_code, 200)
+
+    def test_write_apis_require_csrf_token(self):
+        from django.test import Client
+        c = Client(enforce_csrf_checks=True)
+        c.login(username='alice', password='pw-alice-123')
+        body = json.dumps({'title': 'x'})
+        self.assertEqual(c.post('/api/records/', body, content_type='application/json').status_code, 403)
+        self.assertEqual(c.delete(f'/api/records/{self.rec.id}/').status_code, 403)
+        token = c.get('/').context['csrf_token']
+        r = c.post('/api/records/', body, content_type='application/json', HTTP_X_CSRFTOKEN=str(token))
+        self.assertEqual(r.status_code, 201)
+
+    def test_counters_follow_delete_category_change_and_import(self):
+        self.client.login(username='alice', password='pw-alice-123')
+        m = lambda: OperationalMetric.get_for(self.alice)
+        rid = self.client.post('/api/records/', json.dumps({'title': 'mock', 'cat': 'MockInterview'}), content_type='application/json').json()['record']['id']
+        self.assertEqual(m().mock_interviews, 1)
+        self.client.put(f'/api/records/{rid}/', json.dumps({'cat': 'Placement'}), content_type='application/json')
+        self.assertEqual((m().mock_interviews, m().placements_supported), (0, 1))
+        self.client.delete(f'/api/records/{rid}/')
+        self.assertEqual(m().placements_supported, 0)
+        self.client.post('/api/import/json/', json.dumps([{'title': 'e', 'date': '2026-01-01', 'cat': 'ProjectEval'}]), content_type='application/json')
+        self.assertEqual(m().project_evaluations, 1)
+
+    def test_duplicate_metric_rows_do_not_break_requests(self):
+        first = OperationalMetric.objects.create(user=self.alice, mock_interviews=4)
+        OperationalMetric.objects.create(user=self.alice)  # what parallel first page loads used to produce
+        self.client.login(username='alice', password='pw-alice-123')
+        self.assertEqual(self.client.get('/api/stats/').status_code, 200)
+        self.assertEqual(OperationalMetric.get_for(self.alice).id, first.id)

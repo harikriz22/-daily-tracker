@@ -1035,6 +1035,12 @@
 <div id="toast"></div>
 
 <script>
+// Send Django's CSRF token on every same-origin write request.
+const _fetch = window.fetch;
+window.fetch = (url, opts = {}) => {
+  if (opts.method && opts.method !== 'GET') opts.headers = { ...opts.headers, 'X-CSRFToken': '{{ csrf_token }}' };
+  return _fetch(url, opts);
+};
 const $ = id => document.getElementById(id);
 const todayStr = () => new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 

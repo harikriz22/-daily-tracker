@@ -73,10 +73,30 @@ class OperationalMetric(models.Model):
         verbose_name = 'Operational Metric'
         verbose_name_plural = 'Operational Metrics'
 
+    CATEGORY_FIELD = {
+        'MockInterview': 'mock_interviews',
+        'ProjectEval': 'project_evaluations',
+        'AdmissionSupport': 'support_enquiries',
+        'Syllabus': 'syllabus_updates',
+        'Placement': 'placements_supported',
+    }
+
     @classmethod
     def get_for(cls, user):
-        obj, _ = cls.objects.get_or_create(user=user)
-        return obj
+        # shortcut: no DB unique constraint (avoids a Turso table rebuild), so parallel first requests can
+        # create a duplicate row; always use the oldest one. Add unique=True if this ever matters.
+        return cls.objects.filter(user=user).order_by('id').first() or cls.objects.create(user=user)
+
+    @classmethod
+    def bump(cls, user, category, delta):
+        """Adjust the counter linked to a record category (never below 0). Returns True if one changed."""
+        field = cls.CATEGORY_FIELD.get(category)
+        if not field:
+            return False
+        metric = cls.get_for(user)
+        setattr(metric, field, max(0, getattr(metric, field) + delta))
+        metric.save()
+        return True
 
     def to_dict(self):
         return {
